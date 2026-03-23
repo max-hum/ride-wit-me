@@ -45,6 +45,38 @@ def main() -> None:
     print("\nRanking routes...")
     ranked_routes = rank_routes(enriched_routes, request)
 
+    if args.debug:
+    print("\nAll ranked routes:\n")
+    for idx, scored_route in enumerate(ranked_routes, start=1):
+        candidate = scored_route.enriched.candidate
+        fit = scored_route.fit
+        enriched = scored_route.enriched
+
+        print(f"#{idx} | {candidate.route_id}")
+        print(f"  Distance:              {candidate.distance_km} km")
+        print(f"  Elevation:             {candidate.elevation_m} m")
+        print(f"  Est. duration:         {candidate.estimated_duration_min} min")
+        print(f"  Overall fit:           {fit.overall_fit_score}")
+        print(f"  Distance fit:          {fit.distance_fit_score}")
+        print(f"  Elevation fit:         {fit.elevation_fit_score}")
+        print(f"  Road quality:          {fit.road_quality_score}")
+        print(f"  Ride feel:             {fit.ride_feel_score}")
+        print(f"  Scenic:                {fit.scenic_score}")
+        print(f"  Climbing:              {fit.climbing_score}")
+        print(f"  Novelty:               {fit.novelty_score}")
+        print(f"  Busy road penalty:     {fit.busy_road_penalty}")
+        print(f"  Urban penalty:         {fit.urban_penalty}")
+        print(f"  Unpaved penalty:       {fit.unpaved_penalty}")
+        print(f"  Repeat penalty:        {fit.repeat_penalty}")
+        print(f"  Urban ratio:           {enriched.urban_ratio}")
+        print(f"  Busy road ratio:       {enriched.busy_road_ratio}")
+        print(f"  Unpaved ratio:         {enriched.unpaved_ratio}")
+        print(f"  Repeated seg ratio:    {enriched.repeated_segment_ratio}")
+        print(f"  Minor road ratio:      {enriched.minor_road_ratio}")
+        print(f"  Paved ratio:           {enriched.paved_ratio}")
+        print(f"  Why:                   {scored_route.reason_summary}")
+        print("")
+
     print("\nTop 3 routes:\n")
     for idx, scored_route in enumerate(ranked_routes[:3], start=1):
         candidate = scored_route.enriched.candidate
