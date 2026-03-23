@@ -5,10 +5,10 @@ import argparse
 from app.config import DEBUG_RUNS_DIR, OUTPUT_DIR
 from services.debug_export import dump_debug_run
 from domain.models import RideRequest, StartPoint
-from services.candidate_generator import CandidateGenerator
-from services.enrichment import enrich_route
+#from services.candidate_generator import CandidateGenerator
+#from services.enrichment import enrich_route
 from services.exporter import export_gpx
-from services.ranking import rank_routes
+#from services.ranking import rank_routes
 
 
 def parse_args() -> argparse.Namespace:
@@ -35,16 +35,20 @@ def main() -> None:
         ride_style=args.ride_style,
     )
 
-    print("\nGenerating candidate routes...")
-    generator = CandidateGenerator()
-    candidates = generator.generate(request)
-    print(f"Generated {len(candidates)} candidate route(s).")
+    from services.route_service import generate_routes
+    ranked_routes = generate_routes(request)
 
-    print("\nEnriching routes...")
-    enriched_routes = [enrich_route(route) for route in candidates]
 
-    print("\nRanking routes...")
-    ranked_routes = rank_routes(enriched_routes, request)
+#    print("\nGenerating candidate routes...")
+#    generator = CandidateGenerator()
+#    candidates = generator.generate(request)
+#    print(f"Generated {len(candidates)} candidate route(s).")
+
+#    print("\nEnriching routes...")
+#    enriched_routes = [enrich_route(route) for route in candidates]
+
+#    print("\nRanking routes...")
+#    ranked_routes = rank_routes(enriched_routes, request)
 
     debug_json_path = dump_debug_run(request, ranked_routes, DEBUG_RUNS_DIR)
 
