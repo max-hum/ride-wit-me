@@ -105,8 +105,11 @@ class OpenRouteServiceProvider:
         props = feature["properties"]
         summary = props["summary"]
 
-        latlng_geometry = [(pt[1], pt[0]) for pt in geometry]
-        elevation_gain = self._estimate_elevation_gain(geometry)
+        latlng_geometry = [
+            (pt[1], pt[0], float(pt[2]) if len(pt) >= 3 else 0.0)
+            for pt in geometry
+        ]        
+        elevation_gain = props.get("ascent", 0.0)
 
         return CandidateRoute(
             route_id=f"ors-{route_index}-{uuid.uuid4().hex[:8]}",
@@ -142,28 +145,3 @@ class OpenRouteServiceProvider:
         )
 
         return (math.degrees(lat2), math.degrees(lon2))
-
-    @staticmethod
-    def _estimate_elevation_gain(geometry: List[List[float]]) -> float:
-        """
-        Estimate ascent from geometry elevation, while filtering out tiny
-        point-to-point noise that would otherwise inflate total climbing.
-        """
-        gain = 0.0
-        prev_ele = None
-        min_rise_threshold_m = 3.0
-
-        for pt in geometry:
-            if len(pt) < 3:
-                continue
-
-            ele = float(pt[2])
-
-            if prev_ele is not None:
-                delta = ele - prev_ele
-                if delta >= min_rise_threshold_m:
-                    gain += delta
-
-            prev_ele = ele
-
-        return gain

@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple
 from pydantic import BaseModel, Field
 
 
-LatLng = Tuple[float, float]
+LatLng = Tuple[float, float, float]
 
 
 class RideStyle(str, Enum):

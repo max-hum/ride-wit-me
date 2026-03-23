@@ -187,7 +187,7 @@ def _estimate_repeat_ratio(geometry: List[Tuple[float, float]]) -> float:
     if not geometry:
         return 0.0
 
-    rounded_points = [(round(lat, 4), round(lng, 4)) for lat, lng in geometry]
+    rounded_points = [(round(lat, 4), round(lng, 4)) for lat, lng, _ in geometry]
     unique_points = len(set(rounded_points))
     total_points = len(rounded_points)
 
@@ -265,7 +265,7 @@ def _estimate_novelty_score(
     if not geometry:
         return 0.0
 
-    rounded_points = [(round(lat, 3), round(lng, 3)) for lat, lng in geometry]
+    rounded_points = [(round(lat, 3), round(lng, 3)) for lat, lng, _ in geometry]
     uniqueness = len(set(rounded_points)) / len(rounded_points)
     value = 0.7 * uniqueness + 0.3 * (1.0 - repeated_segment_ratio)
     return _clamp01(value)

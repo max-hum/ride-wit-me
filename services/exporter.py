@@ -16,11 +16,12 @@ def export_gpx(route: CandidateRoute, output_dir: Path) -> Path:
     segment = gpxpy.gpx.GPXTrackSegment()
     track.segments.append(segment)
 
-    for lat, lng in route.geometry:
+    for lat, lng, ele in route.geometry:
         segment.points.append(
             gpxpy.gpx.GPXTrackPoint(
                 latitude=lat,
                 longitude=lng,
+                elevation=ele,
             )
         )
 
