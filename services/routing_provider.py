@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 import math
 import uuid
 from typing import List, Tuple
@@ -25,32 +27,22 @@ class OpenRouteServiceProvider:
             )
 
     def generate_candidate_routes(self, request: RideRequest) -> List[CandidateRoute]:
-        """
-        v0 candidate generation strategy:
-        - generate loop-like routes using waypoint anchors around the start point
-        - vary bearings and waypoint distances to create diversity
-        - ask ORS for a full route that returns to start
-        """
         start_lat = request.start_point.lat
         start_lng = request.start_point.lng
 
-        bearings = [0, 45, 90, 135, 180, 225, 270, 315]
-        distance_factors = [0.85, 1.0, 1.1, 0.95, 1.05, 0.9, 1.15, 0.8]
-
-        base_radius_km = max(8.0, request.distance_km / 4.0)
+        base_radius_km = max(8.0, request.distance_km / 4.2)
         routes: List[CandidateRoute] = []
 
-        for idx, bearing in enumerate(bearings):
-            radius_factor = distance_factors[idx % len(distance_factors)]
-            radius_km = base_radius_km * radius_factor
+        candidate_coordinate_sets: List[List[List[float]]] = []
 
-            wp1 = self._offset_point(start_lat, start_lng, radius_km, bearing)
-            wp2 = self._offset_point(
-                start_lat,
-                start_lng,
-                radius_km * 0.9,
-                (bearing + 70) % 360,
-            )
+        # Family A: classic 2-anchor loops
+        bearings_a = [0, 60, 120, 180, 240, 300]
+        for bearing in bearings_a:
+            r1 = base_radius_km * 1.00
+            r2 = base_radius_km * 0.92
+
+            wp1 = self._offset_point(start_lat, start_lng, r1, bearing)
+            wp2 = self._offset_point(start_lat, start_lng, r2, (bearing + 75) % 360)
 
             coords = [
                 [start_lng, start_lat],
@@ -58,7 +50,44 @@ class OpenRouteServiceProvider:
                 [wp2[1], wp2[0]],
                 [start_lng, start_lat],
             ]
+            candidate_coordinate_sets.append(coords)
 
+        # Family B: rounder 3-anchor loops
+        bearings_b = [30, 150, 270]
+        for bearing in bearings_b:
+            r = base_radius_km * 0.95
+
+            wp1 = self._offset_point(start_lat, start_lng, r, bearing)
+            wp2 = self._offset_point(start_lat, start_lng, r * 1.05, (bearing + 55) % 360)
+            wp3 = self._offset_point(start_lat, start_lng, r * 0.95, (bearing + 110) % 360)
+
+            coords = [
+                [start_lng, start_lat],
+                [wp1[1], wp1[0]],
+                [wp2[1], wp2[0]],
+                [wp3[1], wp3[0]],
+                [start_lng, start_lat],
+            ]
+            candidate_coordinate_sets.append(coords)
+
+        # Family C: tighter loops to reduce overshoot
+        bearings_c = [90, 210, 330]
+        for bearing in bearings_c:
+            r1 = base_radius_km * 0.82
+            r2 = base_radius_km * 0.75
+
+            wp1 = self._offset_point(start_lat, start_lng, r1, bearing)
+            wp2 = self._offset_point(start_lat, start_lng, r2, (bearing + 65) % 360)
+
+            coords = [
+                [start_lng, start_lat],
+                [wp1[1], wp1[0]],
+                [wp2[1], wp2[0]],
+                [start_lng, start_lat],
+            ]
+            candidate_coordinate_sets.append(coords)
+
+        for idx, coords in enumerate(candidate_coordinate_sets):
             try:
                 route = self._request_route(coords, route_index=idx)
                 routes.append(route)
@@ -69,6 +98,7 @@ class OpenRouteServiceProvider:
             raise RoutingProviderError("No candidate routes were generated.")
 
         return routes
+    
 
     def _request_route(
         self,
@@ -111,8 +141,10 @@ class OpenRouteServiceProvider:
         ]        
         elevation_gain = props.get("ascent", 0.0)
 
+        timestamp = datetime.now().strftime("%H%M%S")
+
         return CandidateRoute(
-            route_id=f"ors-{route_index}-{uuid.uuid4().hex[:8]}",
+            route_id=f"ors-{timestamp}-{route_index:02d}-{uuid.uuid4().hex[:6]}",
             provider="openrouteservice",
             geometry=latlng_geometry,
             distance_km=round(summary["distance"] / 1000.0, 2),
