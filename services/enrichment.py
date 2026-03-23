@@ -198,21 +198,9 @@ def _estimate_repeat_ratio(geometry: List[Tuple[float, float]]) -> float:
 
 
 def _estimate_urban_ratio(candidate: CandidateRoute, minor_road_ratio: float) -> float:
-    """
-    Crude v0 heuristic:
-    - shorter routes are more likely to stay urban around a fixed start point
-    - low minor-road share often means more urban/connector exposure
-    """
-    distance_factor = 0.0
-    if candidate.distance_km < 35:
-        distance_factor = 0.45
-    elif candidate.distance_km < 60:
-        distance_factor = 0.28
-    else:
-        distance_factor = 0.18
-
-    road_factor = 1.0 - minor_road_ratio
-    urban_ratio = 0.55 * distance_factor + 0.45 * road_factor
+    distance_component = max(0.0, min(1.0, (70.0 - candidate.distance_km) / 70.0))
+    road_component = 1.0 - minor_road_ratio
+    urban_ratio = 0.4 * distance_component + 0.6 * road_component
     return _clamp01(urban_ratio)
 
 
@@ -235,18 +223,16 @@ def _estimate_climbing_score(candidate: CandidateRoute) -> float:
 
     elev_per_km = candidate.elevation_m / candidate.distance_km
 
-    # Very rough normalization for road riding:
-    # ~5 m/km = quite flat
-    # ~10-15 m/km = nicely rolling / hilly
-    # >20 m/km = quite hard
-    if elev_per_km <= 3:
-        return 0.15
-    if elev_per_km <= 6:
-        return 0.35
+    if elev_per_km <= 4:
+        return 0.20
+    if elev_per_km <= 7:
+        return 0.45
     if elev_per_km <= 10:
         return 0.65
-    if elev_per_km <= 15:
-        return 0.85
+    if elev_per_km <= 13:
+        return 0.80
+    if elev_per_km <= 16:
+        return 0.92
     return 1.0
 
 
