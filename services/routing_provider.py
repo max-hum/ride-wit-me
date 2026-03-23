@@ -53,7 +53,7 @@ class OpenRouteServiceProvider:
             candidate_coordinate_sets.append(coords)
 
         # Family B: rounder 3-anchor loops
-        bearings_b = [30, 150, 270]
+        bearings_b = [30, 90, 150, 210, 270, 330]
         for bearing in bearings_b:
             r = base_radius_km * 0.95
 
@@ -71,7 +71,7 @@ class OpenRouteServiceProvider:
             candidate_coordinate_sets.append(coords)
 
         # Family C: tighter loops to reduce overshoot
-        bearings_c = [90, 210, 330]
+        bearings_c = [30, 90, 150, 210, 270, 330]
         for bearing in bearings_c:
             r1 = base_radius_km * 0.82
             r2 = base_radius_km * 0.75
