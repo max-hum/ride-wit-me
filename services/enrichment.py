@@ -93,32 +93,42 @@ def enrich_route(candidate: CandidateRoute) -> EnrichedRoute:
 
 def _extract_distribution(extra_info: Dict) -> Dict[int, float]:
     """
-    ORS extras contain segments with [from, to, value].
-    We approximate share by segment point span.
+    ORS extras can contain either:
+    - "summary": list of {"value": X, "amount": Y}
+    - "values": list of [from, to, value]
+
+    We always normalize the result so returned shares sum to ~1.0.
     """
     summary = extra_info.get("summary")
     if summary:
-        distribution = {}
+        raw_distribution = {}
+        total = 0.0
+
         for item in summary:
             value = int(item.get("value"))
             amount = float(item.get("amount", 0.0))
-            distribution[value] = distribution.get(value, 0.0) + amount
-        return distribution
+            raw_distribution[value] = raw_distribution.get(value, 0.0) + amount
+            total += amount
+
+        if total > 0:
+            return {k: v / total for k, v in raw_distribution.items()}
+        return {}
 
     values = extra_info.get("values", [])
-    counter: Counter[int] = Counter()
+    raw_distribution: Dict[int, float] = {}
 
     for item in values:
         if len(item) >= 3:
             start_idx, end_idx, value = item[0], item[1], item[2]
             span = max(1, end_idx - start_idx)
-            counter[int(value)] += span
+            value = int(value)
+            raw_distribution[value] = raw_distribution.get(value, 0.0) + span
 
-    total = sum(counter.values())
-    if total == 0:
-        return {}
+    total = sum(raw_distribution.values())
+    if total > 0:
+        return {k: v / total for k, v in raw_distribution.items()}
 
-    return {k: v / total for k, v in counter.items()}
+    return {}
 
 
 def _estimate_surface_ratios(surface_distribution: Dict[int, float]) -> Tuple[float, float]:
