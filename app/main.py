@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import argparse
 
-from app.config import OUTPUT_DIR
+from app.config import DEBUG_RUNS_DIR, OUTPUT_DIR
+from services.debug_export import dump_debug_run
 from domain.models import RideRequest, StartPoint
 from services.candidate_generator import CandidateGenerator
 from services.enrichment import enrich_route
@@ -44,6 +45,8 @@ def main() -> None:
 
     print("\nRanking routes...")
     ranked_routes = rank_routes(enriched_routes, request)
+
+    debug_json_path = dump_debug_run(request, ranked_routes, DEBUG_RUNS_DIR)
 
     if args.debug:
         print("\nAll ranked routes:\n")
@@ -97,9 +100,18 @@ def main() -> None:
         print(f"  Why:              {scored_route.reason_summary}")
         print("")
 
-    best_route = ranked_routes[0].enriched.candidate
-    gpx_path = export_gpx(best_route, OUTPUT_DIR)
-    print(f"Best route GPX exported to: {gpx_path}")
+    exported_paths = []
+
+    for scored_route in ranked_routes[:3]:
+        gpx_path = export_gpx(scored_route.enriched.candidate, OUTPUT_DIR)
+        exported_paths.append(gpx_path)
+
+    print("Top 3 GPX files exported:")
+    for path in exported_paths:
+        print(f"  - {path}")
+
+    print(f"Debug run JSON exported to: {debug_json_path}")
+    
     print("\nDone.")
 
 
