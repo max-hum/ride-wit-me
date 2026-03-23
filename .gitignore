@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env
+.env.*
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Outputs (generated files)
+outputs/
+
+# Logs (optional)
+*.log
+
+# Python packaging (future-proof)
+build/
+dist/
+*.egg-info/
