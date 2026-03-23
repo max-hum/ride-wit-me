@@ -71,6 +71,7 @@ class EnrichedRoute(BaseModel):
     busy_road_ratio: float = 0.0
     unpaved_ratio: float = 0.0
     repeated_segment_ratio: float = 0.0
+    longest_repeated_block_km: float = 0.0
 
     enrichment_notes: Dict[str, Any] = Field(default_factory=dict)
 
@@ -91,6 +92,7 @@ class FitBreakdown(BaseModel):
     urban_penalty: float
     unpaved_penalty: float
     repeat_penalty: float
+    branch_penalty: float
 
 
 class ScoredRoute(BaseModel):

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Dict, List, Tuple
 
+
 from domain.models import CandidateRoute, EnrichedRoute
 
 
@@ -63,7 +64,7 @@ def enrich_route(candidate: CandidateRoute) -> EnrichedRoute:
 
     paved_ratio, unpaved_ratio = _estimate_surface_ratios(surface_distribution)
     minor_road_ratio, busy_road_ratio = _estimate_waytype_ratios(waytype_distribution)
-    repeated_segment_ratio = _estimate_repeat_ratio(candidate.geometry)
+    repeated_segment_ratio, longest_repeated_block_km = _estimate_repeat_metrics(candidate.geometry)
     urban_ratio = _estimate_urban_ratio(candidate, minor_road_ratio)
     scenic_score = _estimate_scenic_score(urban_ratio, minor_road_ratio, repeated_segment_ratio)
     climbing_score = _estimate_climbing_score(candidate)
@@ -87,6 +88,7 @@ def enrich_route(candidate: CandidateRoute) -> EnrichedRoute:
         busy_road_ratio=round(busy_road_ratio, 3),
         unpaved_ratio=round(unpaved_ratio, 3),
         repeated_segment_ratio=round(repeated_segment_ratio, 3),
+        longest_repeated_block_km=round(longest_repeated_block_km, 3),
         enrichment_notes=notes,
     )
 
@@ -182,19 +184,90 @@ def _estimate_waytype_ratios(waytype_distribution: Dict[int, float]) -> Tuple[fl
 
     return minor, busy
 
+def _haversine_m(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    from math import radians, sin, cos, sqrt, atan2
 
-def _estimate_repeat_ratio(geometry: List[Tuple[float, float]]) -> float:
-    if not geometry:
-        return 0.0
+    earth_radius_m = 6371000.0
+    dlat = radians(lat2 - lat1)
+    dlng = radians(lng2 - lng1)
 
-    rounded_points = [(round(lat, 4), round(lng, 4)) for lat, lng, _ in geometry]
-    unique_points = len(set(rounded_points))
-    total_points = len(rounded_points)
+    a = (
+        sin(dlat / 2) ** 2
+        + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlng / 2) ** 2
+    )
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return earth_radius_m * c
 
-    uniqueness_ratio = unique_points / total_points if total_points else 1.0
-    repeat_ratio = 1.0 - uniqueness_ratio
+def _estimate_repeat_metrics(
+    geometry: List[Tuple[float, float, float]],
+) -> Tuple[float, float]:
+    """
+    Returns:
+    - repeated_segment_ratio
+    - longest_repeated_block_km
 
-    return _clamp01(repeat_ratio)
+    Ignores repeated segments near the start/end of the ride,
+    because a little overlap when leaving/returning home is acceptable.
+    """
+    if len(geometry) < 2:
+        return 0.0, 0.0
+
+    total_segments = len(geometry) - 1
+    if total_segments < 10:
+        return 0.0, 0.0
+
+    # Ignore first/last 10% of segments
+    margin = max(1, int(total_segments * 0.10))
+    start_idx = margin
+    end_idx = total_segments - margin
+
+    if end_idx <= start_idx:
+        return 0.0, 0.0
+
+    segment_keys = []
+    segment_lengths_m = []
+
+    for i in range(1, len(geometry)):
+        lat1, lng1, _ = geometry[i - 1]
+        lat2, lng2, _ = geometry[i]
+
+        p1 = (round(lat1, 4), round(lng1, 4))
+        p2 = (round(lat2, 4), round(lng2, 4))
+
+        key = tuple(sorted([p1, p2]))
+        segment_keys.append(key)
+        segment_lengths_m.append(_haversine_m(lat1, lng1, lat2, lng2))
+
+    core_keys = segment_keys[start_idx:end_idx]
+    core_lengths_m = segment_lengths_m[start_idx:end_idx]
+
+    if not core_lengths_m:
+        return 0.0, 0.0
+
+    counts = Counter(core_keys)
+
+    total_length_m = sum(core_lengths_m)
+    if total_length_m <= 0:
+        return 0.0, 0.0
+
+    repeated_length_m = sum(
+        length
+        for key, length in zip(core_keys, core_lengths_m)
+        if counts[key] > 1
+    )
+    repeated_ratio = repeated_length_m / total_length_m
+
+    longest_block_m = 0.0
+    current_block_m = 0.0
+
+    for key, length in zip(core_keys, core_lengths_m):
+        if counts[key] > 1:
+            current_block_m += length
+            longest_block_m = max(longest_block_m, current_block_m)
+        else:
+            current_block_m = 0.0
+
+    return _clamp01(repeated_ratio), round(longest_block_m / 1000.0, 2)
 
 
 def _estimate_urban_ratio(candidate: CandidateRoute, minor_road_ratio: float) -> float:

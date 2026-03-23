@@ -47,7 +47,7 @@ STYLE_WEIGHTS: Dict[RideStyle, Dict[str, float]] = {
 PENALTY_WEIGHTS = {
     "busy_roads": 0.18,
     "urban": 0.14,
-    "unpaved": 0.60,
+    "unpaved": 0.40,
     "repeated_segments": 0.60,
 }
 
@@ -146,12 +146,18 @@ def score_route(route: EnrichedRoute, request: RideRequest) -> ScoredRoute:
         else 0.0
     )
 
+    branch_penalty = 0.0
+    if request.avoid.repeated_segments:
+        # Harshly punish long out-and-back branches
+        branch_penalty = min(0.35, route.longest_repeated_block_km * 0.03)
+
     overall_fit_score = _clamp01(
         positive_score
         - busy_road_penalty
         - urban_penalty
         - unpaved_penalty
         - repeat_penalty
+        - branch_penalty
     )
 
     fit = FitBreakdown(
@@ -167,6 +173,7 @@ def score_route(route: EnrichedRoute, request: RideRequest) -> ScoredRoute:
         urban_penalty=round(urban_penalty, 3),
         unpaved_penalty=round(unpaved_penalty, 3),
         repeat_penalty=round(repeat_penalty, 3),
+        branch_penalty=round(branch_penalty, 3),
     )
 
     reasons = []
@@ -190,7 +197,7 @@ def score_route(route: EnrichedRoute, request: RideRequest) -> ScoredRoute:
         reasons.append("too urban")
     if fit.unpaved_penalty >= 0.10:
         reasons.append("too much unpaved surface")
-    if fit.repeat_penalty >= 0.08:
+    if fit.repeat_penalty >= 0.04:
         reasons.append("too many repeated segments")
 
     reason_summary = ", ".join(reasons[:3]) if reasons else "balanced route candidate"

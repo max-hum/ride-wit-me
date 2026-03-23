@@ -71,6 +71,8 @@ def main() -> None:
             print(f"  Urban penalty:         {fit.urban_penalty}")
             print(f"  Unpaved penalty:       {fit.unpaved_penalty}")
             print(f"  Repeat penalty:        {fit.repeat_penalty}")
+            print(f"  Longest repeated blk:  {enriched.longest_repeated_block_km} km")
+            print(f"  Branch penalty:        {fit.branch_penalty}")
             print(f"  Urban ratio:           {enriched.urban_ratio}")
             print(f"  Busy road ratio:       {enriched.busy_road_ratio}")
             print(f"  Unpaved ratio:         {enriched.unpaved_ratio}")
