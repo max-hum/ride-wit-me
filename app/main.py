@@ -17,6 +17,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--distance", type=float, required=True, help="Target distance in km")
     parser.add_argument("--elevation", type=float, required=True, help="Target elevation in m")
     parser.add_argument("--ride-style", type=str, default="endurance")
+    parser.add_argument("--debug", action="store_true")
     return parser.parse_args()
 
 
