@@ -7,11 +7,11 @@ from domain.models import EnrichedRoute, FitBreakdown, RideRequest, RideStyle, S
 
 STYLE_WEIGHTS: Dict[RideStyle, Dict[str, float]] = {
     RideStyle.ENDURANCE: {
-        "distance_fit": 0.34,
-        "elevation_fit": 0.34,
+        "distance_fit": 0.40,
+        "elevation_fit": 0.40,
         "road_quality": 0.16,
-        "ride_feel": 0.08,
-        "scenic": 0.04,
+        "ride_feel": 0.00,
+        "scenic": 0.00,
         "climbing": 0.00,
         "novelty": 0.04,
     },
@@ -47,8 +47,8 @@ STYLE_WEIGHTS: Dict[RideStyle, Dict[str, float]] = {
 PENALTY_WEIGHTS = {
     "busy_roads": 0.18,
     "urban": 0.14,
-    "unpaved": 0.30,
-    "repeated_segments": 0.30,
+    "unpaved": 0.60,
+    "repeated_segments": 0.60,
 }
 
 
@@ -91,13 +91,13 @@ def score_route(route: EnrichedRoute, request: RideRequest) -> ScoredRoute:
     distance_fit_score = _target_fit_score(
         actual=route.candidate.distance_km,
         target=request.distance_km,
-        tolerance_ratio=0.15,
+        tolerance_ratio=0.30,
     )
 
     elevation_fit_score = _target_fit_score(
         actual=route.candidate.elevation_m,
         target=request.elevation_m,
-        tolerance_ratio=0.15,
+        tolerance_ratio=0.30,
     )
 
     road_quality_score = _road_quality_score(route)
