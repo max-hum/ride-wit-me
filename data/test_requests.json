@@ -1,0 +1,23 @@
+[
+  {
+    "name": "endurance_65_700",
+    "start_point": { "lat": 49.3597, "lng": 6.1685 },
+    "distance_km": 65,
+    "elevation_m": 700,
+    "ride_style": "endurance"
+  },
+  {
+    "name": "hilly_80_1000",
+    "start_point": { "lat": 49.3597, "lng": 6.1685 },
+    "distance_km": 80,
+    "elevation_m": 1000,
+    "ride_style": "hilly"
+  },
+  {
+    "name": "scenic_55_500",
+    "start_point": { "lat": 49.3597, "lng": 6.1685 },
+    "distance_km": 55,
+    "elevation_m": 500,
+    "ride_style": "scenic"
+  }
+]
