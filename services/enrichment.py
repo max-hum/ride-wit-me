@@ -155,25 +155,32 @@ def _estimate_surface_ratios(surface_distribution: Dict[int, float]) -> Tuple[fl
 
 
 def _estimate_waytype_ratios(waytype_distribution: Dict[int, float]) -> Tuple[float, float]:
+    """
+    v0 simplified logic:
+    - treat everything as "mixed" instead of trusting ORS enums
+    - derive busy vs minor from a safer heuristic
+    """
+
     if not waytype_distribution:
-        return 0.55, 0.45
+        return 0.5, 0.5
 
-    minor = 0.0
-    major = 0.0
+    # Instead of relying on broken enums,
+    # assume:
+    # - diversity of waytypes = better roads
+    # - concentration = more "main road bias"
 
-    for value, share in waytype_distribution.items():
-        if value in MINOR_WAYTYPE_VALUES:
-            minor += share
-        elif value in MAJOR_WAYTYPE_VALUES:
-            major += share
+    diversity = len(waytype_distribution)
 
-    known = minor + major
-    unknown = max(0.0, 1.0 - known)
+    if diversity >= 4:
+        minor = 0.6
+    elif diversity >= 2:
+        minor = 0.45
+    else:
+        minor = 0.3
 
-    minor += unknown * 0.5
-    major += unknown * 0.5
+    busy = 1.0 - minor
 
-    return _clamp01(minor), _clamp01(major)
+    return minor, busy
 
 
 def _estimate_repeat_ratio(geometry: List[Tuple[float, float]]) -> float:
