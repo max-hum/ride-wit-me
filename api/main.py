@@ -6,9 +6,19 @@ from pydantic import BaseModel
 from domain.models import RideRequest, ScoredRoute
 from services.route_service import generate_routes
 
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Ride Wit Me API")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class GenerateRouteResponse(BaseModel):
     routes: list[dict]
