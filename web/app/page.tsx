@@ -2,12 +2,23 @@
 
 import { useState } from "react";
 
+import dynamic from "next/dynamic";
+
+const Map = dynamic(() => import("@/components/Map"), {
+  ssr: false,
+});
+
 type RouteResponse = {
   route_id: string;
   provider: string;
   distance_km: number;
   elevation_m: number;
   estimated_duration_min: number;
+  geometry: {
+    lat: number;
+    lng: number;
+    ele: number;
+  }[];
   fit: {
     overall_fit_score: number;
     distance_fit_score: number;
@@ -37,6 +48,35 @@ type RouteResponse = {
 type ApiResponse = {
   routes: RouteResponse[];
 };
+
+function downloadRouteAsGpx(route: RouteResponse) {
+  const gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Ride Wit Me" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>${route.route_id}</name>
+    <trkseg>
+${route.geometry
+  .map(
+    (pt) =>
+      `      <trkpt lat="${pt.lat}" lon="${pt.lng}"><ele>${pt.ele}</ele></trkpt>`
+  )
+  .join("\n")}
+    </trkseg>
+  </trk>
+</gpx>`;
+
+  const blob = new Blob([gpx], { type: "application/gpx+xml" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${route.route_id}.gpx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+}
 
 export default function Home() {
   const [startLat, setStartLat] = useState("49.3597");
@@ -211,6 +251,16 @@ export default function Home() {
                 <Metric label="Repeat penalty" value={String(route.fit.repeat_penalty)} />
                 <Metric label="Branch penalty" value={String(route.fit.branch_penalty ?? 0)} />
               </div>
+
+              <Map routes={routes.slice(0, 3)} />
+
+              <button
+                type="button"
+                onClick={() => downloadRouteAsGpx(route)}
+                className="text-sm underline"
+              >
+                Download GPX
+              </button>
             </div>
           ))}
         </div>
