@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ride Wit Me Web
 
-## Getting Started
+This is the Next.js frontend for Ride Wit Me. It sends route-generation requests to the Python backend, renders returned routes on a Leaflet map, and lets the user download routes as GPX files directly from the browser.
 
-First, run the development server:
+## Responsibilities
+
+- Collect ride inputs from the user
+- Call the backend `POST /generate-route` endpoint
+- Show top-ranked route summaries
+- Plot route geometry on an interactive map
+- Export a selected route to GPX client-side
+
+## Requirements
+
+- Node.js 20+ recommended
+- npm
+
+## Setup
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+```
+
+An example file is available at [web/.env.local.example](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/.env.local.example).
+
+## Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `http://127.0.0.1:3000`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+- `npm run dev`: start the development server
+- `npm run build`: create a production build
+- `npm run start`: run the production server
+- `npm run lint`: run ESLint
 
-To learn more about Next.js, take a look at the following resources:
+## Important Files
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [web/app/page.tsx](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/app/page.tsx)
+- [web/components/Map.tsx](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/components/Map.tsx)
+- [web/app/layout.tsx](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/app/layout.tsx)
+- [web/app/globals.css](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/app/globals.css)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Request Shape Sent By The UI
 
-## Deploy on Vercel
+The frontend currently sends:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `start_point`
+- `distance_km`
+- `elevation_m`
+- `ride_style`
+- hardcoded `avoid` preferences
+- hardcoded `prefer` preferences
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The UI does not yet expose the preference toggles individually.
+
+## Notes
+
+- The map uses `react-leaflet` and is loaded client-side only.
+- GPX download is generated in-browser from returned geometry rather than fetched from the backend.
+- The backend must be running and reachable at `NEXT_PUBLIC_API_BASE_URL`.
