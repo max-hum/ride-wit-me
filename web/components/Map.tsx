@@ -4,14 +4,19 @@ import { MapContainer, TileLayer, Polyline } from "react-leaflet";
 
 type Props = {
   routes: {
-    geometry: [number, number][];
+    geometry: {
+      lat: number;
+      lng: number;
+    }[];
   }[];
+  selectedRouteIndex?: number;
 };
 
-export default function Map({ routes }: Props) {
+export default function Map({ routes, selectedRouteIndex = 0 }: Props) {
   if (!routes.length) return null;
 
-  const center = routes[0].geometry[0];
+  const activeRoute = routes[selectedRouteIndex] ?? routes[0];
+  const center = activeRoute.geometry[0];
 
   return (
     <div className="mt-8 h-[400px] w-full overflow-hidden rounded-2xl border">
@@ -26,8 +31,9 @@ export default function Map({ routes }: Props) {
             key={idx}
             positions={route.geometry}
             pathOptions={{
-              weight: 4,
-              opacity: 0.7,
+              color: idx === selectedRouteIndex ? "#dc2626" : "#7dd3fc",
+              weight: idx === selectedRouteIndex ? 6 : 4,
+              opacity: idx === selectedRouteIndex ? 0.95 : 0.55,
             }}
           />
         ))}

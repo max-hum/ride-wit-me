@@ -49,10 +49,15 @@ Without this variable, the frontend cannot call the backend route-generation end
   - Backend fetch call
   - Error/loading state
   - Route cards
+  - Selected-route state
+  - Shared map and elevation-profile rendering
   - Client-side GPX generation
 - [web/components/Map.tsx](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/components/Map.tsx)
   - Leaflet map
   - Polyline rendering for returned routes
+  - Selected-route highlight styling
+- [web/components/ElevationProfile.tsx](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/components/ElevationProfile.tsx)
+  - Elevation chart for the active route
 - [web/app/layout.tsx](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/app/layout.tsx)
   - Global layout
   - Font setup
@@ -99,7 +104,9 @@ The UI then:
 
 - Stores the routes in local React state
 - Renders summary metrics for the top 3
-- Passes the top 3 route geometries to the map
+- Lets the user choose the active route by clicking a card
+- Passes the top 3 route geometries to one shared map
+- Shows an elevation profile for the selected route
 
 ## Map Behavior
 
@@ -109,8 +116,10 @@ The map is dynamically imported with server-side rendering disabled:
 
 Current behavior:
 
-- Centers on the first point of the first route
+- Centers on the first point of the selected route
 - Draws each route as a polyline
+- Renders non-selected routes in light blue
+- Renders the selected route in red with stronger emphasis
 - Uses the OpenStreetMap tile layer
 
 ## GPX Download

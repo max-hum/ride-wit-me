@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import dynamic from "next/dynamic";
 
+import ElevationProfile from "@/components/ElevationProfile";
+
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
 });
@@ -85,9 +87,13 @@ export default function Home() {
   const [elevationM, setElevationM] = useState("700");
   const [rideStyle, setRideStyle] = useState("endurance");
 
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+
   const [routes, setRoutes] = useState<RouteResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const topRoutes = routes.slice(0, 3);
+  const selectedRoute = topRoutes[selectedRouteIndex] ?? topRoutes[0];
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
@@ -132,6 +138,7 @@ export default function Home() {
 
       const data: ApiResponse = await response.json();
       setRoutes(data.routes);
+      setSelectedRouteIndex(0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -219,10 +226,15 @@ export default function Home() {
         )}
 
         <div className="mt-8 space-y-4">
-          {routes.slice(0, 3).map((route, index) => (
+          {topRoutes.map((route, index) => (
             <div
               key={route.route_id}
-              className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200"
+              onClick={() => setSelectedRouteIndex(index)}
+              className={`cursor-pointer rounded-2xl bg-white p-6 shadow-sm border ${
+                selectedRouteIndex === index
+                  ? "border-slate-900 ring-2 ring-slate-200"
+                  : "border-slate-200"
+              }`}
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -252,8 +264,6 @@ export default function Home() {
                 <Metric label="Branch penalty" value={String(route.fit.branch_penalty ?? 0)} />
               </div>
 
-              <Map routes={routes.slice(0, 3)} />
-
               <button
                 type="button"
                 onClick={() => downloadRouteAsGpx(route)}
@@ -264,6 +274,16 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {topRoutes.length > 0 && (
+          <>
+            <Map routes={topRoutes} selectedRouteIndex={selectedRouteIndex} />
+
+            {selectedRoute && (
+              <ElevationProfile geometry={selectedRoute.geometry} />
+            )}
+          </>
+        )}
       </div>
     </main>
   );

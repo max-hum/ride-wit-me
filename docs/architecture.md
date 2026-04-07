@@ -162,9 +162,12 @@ Ride style changes the weights applied to the positive score components.
 The frontend is a client-rendered Next.js App Router application.
 
 - `web/app/page.tsx`
-  - Owns the request form, API call, results list, and GPX download logic
+  - Owns the request form, selected-route state, results list, shared map/profile area, and GPX download logic
 - `web/components/Map.tsx`
   - Renders route polylines with Leaflet via `react-leaflet`
+  - Visually emphasizes the selected route while still showing alternatives
+- `web/components/ElevationProfile.tsx`
+  - Renders the elevation chart for the active route
 
 The map component is loaded dynamically with `ssr: false` because Leaflet depends on browser APIs.
 

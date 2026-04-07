@@ -7,7 +7,9 @@ This is the Next.js frontend for Ride Wit Me. It sends route-generation requests
 - Collect ride inputs from the user
 - Call the backend `POST /generate-route` endpoint
 - Show top-ranked route summaries
-- Plot route geometry on an interactive map
+- Plot the top 3 route geometries on a shared interactive map
+- Highlight the selected route while keeping the alternatives visible
+- Show an elevation profile for the selected route
 - Export a selected route to GPX client-side
 
 ## Requirements
@@ -52,6 +54,7 @@ Open:
 
 - [web/app/page.tsx](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/app/page.tsx)
 - [web/components/Map.tsx](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/components/Map.tsx)
+- [web/components/ElevationProfile.tsx](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/components/ElevationProfile.tsx)
 - [web/app/layout.tsx](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/app/layout.tsx)
 - [web/app/globals.css](/Users/maximehumbert/Documents/GitHub/ride-wit-me/web/app/globals.css)
 
@@ -71,5 +74,7 @@ The UI does not yet expose the preference toggles individually.
 ## Notes
 
 - The map uses `react-leaflet` and is loaded client-side only.
+- The UI shows up to 3 route cards; clicking a card updates one shared map and elevation profile below the list.
+- On the map, non-selected routes are light blue and the selected route is red.
 - GPX download is generated in-browser from returned geometry rather than fetched from the backend.
 - The backend must be running and reachable at `NEXT_PUBLIC_API_BASE_URL`.
