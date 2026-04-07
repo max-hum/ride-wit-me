@@ -35,6 +35,8 @@ Ride Wit Me is a route-generation project for road cycling. It combines a Python
 
 More detail: [docs/architecture.md](/Users/maximehumbert/Documents/GitHub/ride-wit-me/docs/architecture.md)
 
+Current backlog and next steps: [docs/roadmap.md](/Users/maximehumbert/Documents/GitHub/ride-wit-me/docs/roadmap.md)
+
 ## Requirements
 
 ### Backend
@@ -167,6 +169,7 @@ Full contract: [docs/api.md](/Users/maximehumbert/Documents/GitHub/ride-wit-me/d
 ## Documentation Index
 
 - [docs/architecture.md](/Users/maximehumbert/Documents/GitHub/ride-wit-me/docs/architecture.md)
+- [docs/roadmap.md](/Users/maximehumbert/Documents/GitHub/ride-wit-me/docs/roadmap.md)
 - [docs/backend.md](/Users/maximehumbert/Documents/GitHub/ride-wit-me/docs/backend.md)
 - [docs/frontend.md](/Users/maximehumbert/Documents/GitHub/ride-wit-me/docs/frontend.md)
 - [docs/api.md](/Users/maximehumbert/Documents/GitHub/ride-wit-me/docs/api.md)
