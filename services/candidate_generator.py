@@ -7,8 +7,8 @@ from services.routing_provider import OpenRouteServiceProvider
 
 
 class CandidateGenerator:
-    def __init__(self) -> None:
-        self.provider = OpenRouteServiceProvider()
+    def __init__(self, api_key: str | None = None) -> None:
+        self.provider = OpenRouteServiceProvider(api_key=api_key)
 
     def generate(
         self,

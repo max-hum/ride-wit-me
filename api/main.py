@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
 from domain.models import GeocodeResult, RideRequest, ScoredRoute
@@ -20,6 +20,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def resolve_ors_api_key(x_ors_api_key: str | None) -> str | None:
+    if x_ors_api_key is None:
+        return None
+
+    trimmed = x_ors_api_key.strip()
+    return trimmed or None
 
 class GenerateRouteResponse(BaseModel):
     routes: list[dict]
@@ -68,13 +76,16 @@ def health() -> dict:
 
 
 @app.get("/geocode/search", response_model=GeocodeSearchResponse)
-def geocode_search(text: str) -> GeocodeSearchResponse:
+def geocode_search(
+    text: str,
+    x_ors_api_key: str | None = Header(default=None, alias="X-ORS-API-Key"),
+) -> GeocodeSearchResponse:
     query = text.strip()
     if not query:
         raise HTTPException(status_code=400, detail="Query text is required.")
 
     try:
-        provider = OpenRouteServiceProvider()
+        provider = OpenRouteServiceProvider(api_key=resolve_ors_api_key(x_ors_api_key))
         results = provider.geocode_search(query)
     except RoutingProviderError as err:
         raise HTTPException(status_code=500, detail=str(err)) from err
@@ -85,8 +96,14 @@ def geocode_search(text: str) -> GeocodeSearchResponse:
 
 
 @app.post("/generate-route", response_model=GenerateRouteResponse)
-def generate_route(request: RideRequest) -> GenerateRouteResponse:
-    ranked_routes = generate_routes(request)
+def generate_route(
+    request: RideRequest,
+    x_ors_api_key: str | None = Header(default=None, alias="X-ORS-API-Key"),
+) -> GenerateRouteResponse:
+    ranked_routes = generate_routes(
+        request,
+        api_key=resolve_ors_api_key(x_ors_api_key),
+    )
     return GenerateRouteResponse(
         routes=[scored_route_to_dict(route) for route in ranked_routes]
     )

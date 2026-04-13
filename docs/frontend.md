@@ -70,6 +70,7 @@ Without this variable, the frontend cannot call the backend route-generation end
 
 The main page exposes these request controls:
 
+- Optional OpenRouteService API key
 - Start address or place
 - Start latitude
 - Start longitude
@@ -85,6 +86,12 @@ The current location flow:
 - still allows manual coordinate entry
 - restores the latest used values from browser local storage
 - leaves the start-location fields blank on a first-time visit
+
+The current key flow:
+
+- allows the user to provide their own OpenRouteService API key
+- restores the latest used key from browser local storage
+- falls back to the backend's configured server key if the field is left blank
 
 The current implementation hardcodes preference toggles in the request body:
 
@@ -109,6 +116,8 @@ The page sends:
 It can also call:
 
 - `GET ${NEXT_PUBLIC_API_BASE_URL}/geocode/search?text=...`
+
+When present, the UI sends the user-provided ORS key in the `X-ORS-API-Key` header.
 
 Expected result:
 

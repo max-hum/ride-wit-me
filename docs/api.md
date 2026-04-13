@@ -30,6 +30,10 @@ Query parameters:
 
 - `text`: required search string
 
+Optional headers:
+
+- `X-ORS-API-Key`: use a caller-provided OpenRouteService key instead of the server default
+
 Example response:
 
 ```json
@@ -47,6 +51,10 @@ Example response:
 ### `POST /generate-route`
 
 Generates, enriches, ranks, and returns route candidates.
+
+Optional headers:
+
+- `X-ORS-API-Key`: use a caller-provided OpenRouteService key instead of the server default
 
 ## Request Schema
 
@@ -191,6 +199,7 @@ This is a short human-readable explanation built from the score breakdown. It is
 Possible failure cases include:
 
 - Missing `OPENROUTESERVICE_API_KEY`
+- Missing both a caller-provided ORS key and the server default ORS key
 - Upstream OpenRouteService request failure
 - No route candidates generated successfully
 - Request validation errors from FastAPI/Pydantic

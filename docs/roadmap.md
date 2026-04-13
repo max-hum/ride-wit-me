@@ -6,8 +6,6 @@ This document captures the current short-to-medium term backlog for Ride Wit Me.
 
 - Enhance the start-location flow in the UI.
   Notes: the first version is now in place; remaining work is richer address search and autocomplete, better geocoding result selection and error states, and map click selection as a phase-2 bonus.
-- Support user-provided OpenRouteService API keys instead of relying only on one shared project key.
-  Notes: this would let friends use the app without consuming a single owner-managed quota.
 - Revisit scoring weights for ride styles other than `endurance`.
   Notes: the current tuning has mainly been optimized around endurance rides, so `hilly`, `scenic`, and `exploration` need dedicated manual calibration first.
 - Much better estimate of ride duration needed.

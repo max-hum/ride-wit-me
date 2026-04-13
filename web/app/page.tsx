@@ -60,6 +60,7 @@ type GeocodeSearchResponse = {
 };
 
 type StoredRideFormState = {
+  orsApiKey: string;
   addressQuery: string;
   startLat: string;
   startLng: string;
@@ -93,6 +94,7 @@ function readStoredRideFormState(): StoredRideFormState | null {
 
     const parsed = JSON.parse(raw) as Partial<StoredRideFormState>;
     return {
+      orsApiKey: parsed.orsApiKey ?? "",
       addressQuery: parsed.addressQuery ?? "",
       startLat: parsed.startLat ?? "",
       startLng: parsed.startLng ?? "",
@@ -145,6 +147,7 @@ ${route.geometry
 }
 
 export default function Home() {
+  const [orsApiKey, setOrsApiKey] = useState("");
   const [addressQuery, setAddressQuery] = useState("");
   const [startLat, setStartLat] = useState("");
   const [startLng, setStartLng] = useState("");
@@ -168,6 +171,7 @@ export default function Home() {
     if (!savedState) return;
 
     setAddressQuery(savedState.addressQuery);
+    setOrsApiKey(savedState.orsApiKey);
     setStartLat(savedState.startLat);
     setStartLng(savedState.startLng);
     setDistanceKm(savedState.distanceKm);
@@ -188,10 +192,18 @@ export default function Home() {
     setLocationMessage("");
 
     try {
+      const headers: HeadersInit = {};
+      if (orsApiKey.trim()) {
+        headers["X-ORS-API-Key"] = orsApiKey.trim();
+      }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/geocode/search?text=${encodeURIComponent(
           trimmedAddress
-        )}`
+        )}`,
+        {
+          headers,
+        }
       );
 
       if (!response.ok) {
@@ -214,6 +226,7 @@ export default function Home() {
       setStartLng(resolvedLng);
       setLocationMessage("Address resolved and coordinates updated.");
       writeStoredRideFormState({
+        orsApiKey,
         addressQuery: topResult.label,
         startLat: resolvedLat,
         startLng: resolvedLng,
@@ -241,6 +254,7 @@ export default function Home() {
       const parsedElevationM = parseRequiredNumber(elevationM, "Elevation");
 
       writeStoredRideFormState({
+        orsApiKey,
         addressQuery: addressQuery.trim(),
         startLat: String(parsedLat),
         startLng: String(parsedLng),
@@ -249,13 +263,18 @@ export default function Home() {
         rideStyle,
       });
 
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      if (orsApiKey.trim()) {
+        headers["X-ORS-API-Key"] = orsApiKey.trim();
+      }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/generate-route`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers,
           body: JSON.stringify({
             start_point: {
               lat: parsedLat,
@@ -305,6 +324,21 @@ export default function Home() {
           onSubmit={handleGenerate}
           className="mt-8 rounded-2xl bg-white p-6 shadow-sm border border-slate-200"
         >
+          <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <label className="mb-1 block text-sm font-medium">OpenRouteService API key</label>
+            <input
+              className="w-full rounded-xl border border-slate-300 px-3 py-2"
+              type="password"
+              placeholder="Optional: leave blank to use the server default key"
+              value={orsApiKey}
+              onChange={(e) => setOrsApiKey(e.target.value)}
+            />
+            <p className="mt-2 text-sm text-slate-600">
+              The latest used key is restored locally in this browser. If left blank, the
+              backend falls back to its configured server key.
+            </p>
+          </div>
+
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex flex-col gap-2 lg:flex-row lg:items-end">
               <div className="flex-1">

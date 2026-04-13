@@ -56,7 +56,7 @@ Current backlog and next steps: [docs/roadmap.md](/Users/maximehumbert/Documents
 Create a root `.env` file:
 
 ```env
-OPENROUTESERVICE_API_KEY=your_openrouteservice_api_key
+OPENROUTESERVICE_API_KEY=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImYxN2VkNmJjOWIyMTQwNzg5NjFkMjU2NWQyY2IwZDVmIiwiaCI6Im11cm11cjY0In0=
 ```
 
 ### Frontend
