@@ -25,6 +25,8 @@ This document captures the current short-to-medium term backlog for Ride Wit Me.
 - Support side-by-side comparison for two candidate routes.
 - Add route badges such as `best match`, `least urban`, `best climbing`, `least repeated`, or similar distinctions.
 - Show richer preview summaries before deep inspection, including surface quality, urban exposure, repeated-segment ratio, and climb character.
+- Show direction-of-travel arrows on the route path so the riding direction is obvious, for example every 5 to 10 km.
+- Link the map path and elevation profile with a shared hover state so a moving marker highlights the corresponding position on both views.
 - Let users save favorite routes and share them with a link.
 - Add ready-made ride presets such as `after-work spin`, `Sunday endurance`, and `climbing day`.
 - Build a more mobile-friendly flow since the product is well suited to on-the-go use.
