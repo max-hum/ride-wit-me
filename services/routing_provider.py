@@ -9,7 +9,7 @@ from typing import List, Tuple
 import requests
 
 from app.config import OPENROUTESERVICE_API_KEY
-from domain.models import CandidateRoute, RideRequest
+from domain.models import CandidateRoute, GeocodeResult, RideRequest
 
 
 class RoutingProviderError(Exception):
@@ -18,6 +18,7 @@ class RoutingProviderError(Exception):
 
 class OpenRouteServiceProvider:
     BASE_URL = "https://api.openrouteservice.org/v2/directions/cycling-road"
+    GEOCODE_URL = "https://api.openrouteservice.org/geocode/search"
 
     def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key or OPENROUTESERVICE_API_KEY
@@ -98,7 +99,45 @@ class OpenRouteServiceProvider:
             raise RoutingProviderError("No candidate routes were generated.")
 
         return routes
-    
+
+    def geocode_search(self, text: str, size: int = 5) -> List[GeocodeResult]:
+        query = text.strip()
+        if not query:
+            return []
+
+        response = requests.get(
+            self.GEOCODE_URL,
+            params={
+                "api_key": self.api_key,
+                "text": query,
+                "size": size,
+            },
+            timeout=30,
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        results: List[GeocodeResult] = []
+        for feature in data.get("features", []):
+            coordinates = feature.get("geometry", {}).get("coordinates", [])
+            if len(coordinates) < 2:
+                continue
+
+            label = (
+                feature.get("properties", {}).get("label")
+                or feature.get("properties", {}).get("name")
+                or query
+            )
+
+            results.append(
+                GeocodeResult(
+                    label=label,
+                    lat=float(coordinates[1]),
+                    lng=float(coordinates[0]),
+                )
+            )
+
+        return results
 
     def _request_route(
         self,

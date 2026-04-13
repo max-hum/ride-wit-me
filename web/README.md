@@ -5,6 +5,7 @@ This is the Next.js frontend for Ride Wit Me. It sends route-generation requests
 ## Responsibilities
 
 - Collect ride inputs from the user
+- Resolve a start address or place into coordinates when needed
 - Call the backend `POST /generate-route` endpoint
 - Show top-ranked route summaries
 - Plot the top 3 route geometries on a shared interactive map
@@ -71,9 +72,16 @@ The frontend currently sends:
 
 The UI does not yet expose the preference toggles individually.
 
+The start location UI supports both:
+
+- address or place lookup through the backend geocoding endpoint
+- direct latitude and longitude entry
+
 ## Notes
 
 - The map uses `react-leaflet` and is loaded client-side only.
+- The start-location form keeps address lookup and direct coordinates visible at the same time.
+- The latest used location is restored from browser local storage; first-time visits start blank.
 - The UI shows up to 3 route cards; clicking a card updates one shared map and elevation profile below the list.
 - On the map, non-selected routes are light blue and the selected route is red.
 - GPX download is generated in-browser from returned geometry rather than fetched from the backend.

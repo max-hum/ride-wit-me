@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import dynamic from "next/dynamic";
 
@@ -51,6 +51,70 @@ type ApiResponse = {
   routes: RouteResponse[];
 };
 
+type GeocodeSearchResponse = {
+  results: {
+    label: string;
+    lat: number;
+    lng: number;
+  }[];
+};
+
+type StoredRideFormState = {
+  addressQuery: string;
+  startLat: string;
+  startLng: string;
+  distanceKm: string;
+  elevationM: string;
+  rideStyle: string;
+};
+
+const RIDE_FORM_STORAGE_KEY = "ride-wit-me:ride-form";
+
+function parseRequiredNumber(value: string, label: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error(`${label} is required.`);
+  }
+
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${label} must be a valid number.`);
+  }
+
+  return parsed;
+}
+
+function readStoredRideFormState(): StoredRideFormState | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(RIDE_FORM_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<StoredRideFormState>;
+    return {
+      addressQuery: parsed.addressQuery ?? "",
+      startLat: parsed.startLat ?? "",
+      startLng: parsed.startLng ?? "",
+      distanceKm: parsed.distanceKm ?? "65",
+      elevationM: parsed.elevationM ?? "700",
+      rideStyle: parsed.rideStyle ?? "endurance",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredRideFormState(state: StoredRideFormState) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(RIDE_FORM_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore storage failures and keep the form usable.
+  }
+}
+
 function downloadRouteAsGpx(route: RouteResponse) {
   const gpx = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Ride Wit Me" xmlns="http://www.topografix.com/GPX/1/1">
@@ -81,11 +145,15 @@ ${route.geometry
 }
 
 export default function Home() {
-  const [startLat, setStartLat] = useState("49.3597");
-  const [startLng, setStartLng] = useState("6.1685");
+  const [addressQuery, setAddressQuery] = useState("");
+  const [startLat, setStartLat] = useState("");
+  const [startLng, setStartLng] = useState("");
   const [distanceKm, setDistanceKm] = useState("65");
   const [elevationM, setElevationM] = useState("700");
   const [rideStyle, setRideStyle] = useState("endurance");
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationMessage, setLocationMessage] = useState("");
+  const [locationError, setLocationError] = useState("");
 
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
@@ -95,6 +163,71 @@ export default function Home() {
   const topRoutes = routes.slice(0, 3);
   const selectedRoute = topRoutes[selectedRouteIndex] ?? topRoutes[0];
 
+  useEffect(() => {
+    const savedState = readStoredRideFormState();
+    if (!savedState) return;
+
+    setAddressQuery(savedState.addressQuery);
+    setStartLat(savedState.startLat);
+    setStartLng(savedState.startLng);
+    setDistanceKm(savedState.distanceKm);
+    setElevationM(savedState.elevationM);
+    setRideStyle(savedState.rideStyle);
+  }, []);
+
+  async function handleResolveAddress() {
+    const trimmedAddress = addressQuery.trim();
+    if (!trimmedAddress) {
+      setLocationError("Enter an address or place to resolve.");
+      setLocationMessage("");
+      return;
+    }
+
+    setLocationLoading(true);
+    setLocationError("");
+    setLocationMessage("");
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/geocode/search?text=${encodeURIComponent(
+          trimmedAddress
+        )}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Geocoding error: ${response.status}`);
+      }
+
+      const data: GeocodeSearchResponse = await response.json();
+      const topResult = data.results[0];
+
+      if (!topResult) {
+        setLocationError("No matching address found.");
+        return;
+      }
+
+      const resolvedLat = String(topResult.lat);
+      const resolvedLng = String(topResult.lng);
+
+      setAddressQuery(topResult.label);
+      setStartLat(resolvedLat);
+      setStartLng(resolvedLng);
+      setLocationMessage("Address resolved and coordinates updated.");
+      writeStoredRideFormState({
+        addressQuery: topResult.label,
+        startLat: resolvedLat,
+        startLng: resolvedLng,
+        distanceKm,
+        elevationM,
+        rideStyle,
+      });
+    } catch (err) {
+      setLocationError(err instanceof Error ? err.message : "Failed to resolve address.");
+    } finally {
+      setLocationLoading(false);
+    }
+  }
+
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -102,6 +235,20 @@ export default function Home() {
     setRoutes([]);
 
     try {
+      const parsedLat = parseRequiredNumber(startLat, "Start latitude");
+      const parsedLng = parseRequiredNumber(startLng, "Start longitude");
+      const parsedDistanceKm = parseRequiredNumber(distanceKm, "Distance");
+      const parsedElevationM = parseRequiredNumber(elevationM, "Elevation");
+
+      writeStoredRideFormState({
+        addressQuery: addressQuery.trim(),
+        startLat: String(parsedLat),
+        startLng: String(parsedLng),
+        distanceKm,
+        elevationM,
+        rideStyle,
+      });
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/generate-route`,
         {
@@ -111,11 +258,11 @@ export default function Home() {
           },
           body: JSON.stringify({
             start_point: {
-              lat: Number(startLat),
-              lng: Number(startLng),
+              lat: parsedLat,
+              lng: parsedLng,
             },
-            distance_km: Number(distanceKm),
-            elevation_m: Number(elevationM),
+            distance_km: parsedDistanceKm,
+            elevation_m: parsedElevationM,
             ride_style: rideStyle,
             avoid: {
               busy_roads: true,
@@ -158,11 +305,56 @@ export default function Home() {
           onSubmit={handleGenerate}
           className="mt-8 rounded-2xl bg-white p-6 shadow-sm border border-slate-200"
         >
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-end">
+              <div className="flex-1">
+                <label className="mb-1 block text-sm font-medium">Address or place</label>
+                <input
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2"
+                  placeholder="City, street, or place"
+                  value={addressQuery}
+                  onChange={(e) => {
+                    setAddressQuery(e.target.value);
+                    setLocationError("");
+                    setLocationMessage("");
+                  }}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleResolveAddress}
+                disabled={locationLoading}
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
+              >
+                {locationLoading ? "Resolving..." : "Resolve address"}
+              </button>
+            </div>
+
+            <p className="mt-3 text-sm text-slate-600">
+              Use either address lookup or direct coordinates. Route generation always uses
+              the latitude and longitude fields below.
+            </p>
+
+            {locationMessage && (
+              <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                {locationMessage}
+              </div>
+            )}
+
+            {locationError && (
+              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {locationError}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
             <div>
               <label className="mb-1 block text-sm font-medium">Start lat</label>
               <input
                 className="w-full rounded-xl border border-slate-300 px-3 py-2"
+                placeholder="e.g. 49.3597"
                 value={startLat}
                 onChange={(e) => setStartLat(e.target.value)}
               />
@@ -172,6 +364,7 @@ export default function Home() {
               <label className="mb-1 block text-sm font-medium">Start lng</label>
               <input
                 className="w-full rounded-xl border border-slate-300 px-3 py-2"
+                placeholder="e.g. 6.1685"
                 value={startLng}
                 onChange={(e) => setStartLng(e.target.value)}
               />

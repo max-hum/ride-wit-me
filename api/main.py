@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from domain.models import RideRequest, ScoredRoute
+from domain.models import GeocodeResult, RideRequest, ScoredRoute
+from services.routing_provider import OpenRouteServiceProvider, RoutingProviderError
 from services.route_service import generate_routes
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +23,10 @@ app.add_middleware(
 
 class GenerateRouteResponse(BaseModel):
     routes: list[dict]
+
+
+class GeocodeSearchResponse(BaseModel):
+    results: list[GeocodeResult]
 
 
 def scored_route_to_dict(route: ScoredRoute) -> dict:
@@ -60,6 +65,23 @@ def scored_route_to_dict(route: ScoredRoute) -> dict:
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+@app.get("/geocode/search", response_model=GeocodeSearchResponse)
+def geocode_search(text: str) -> GeocodeSearchResponse:
+    query = text.strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="Query text is required.")
+
+    try:
+        provider = OpenRouteServiceProvider()
+        results = provider.geocode_search(query)
+    except RoutingProviderError as err:
+        raise HTTPException(status_code=500, detail=str(err)) from err
+    except Exception as err:
+        raise HTTPException(status_code=502, detail=f"Geocoding failed: {err}") from err
+
+    return GeocodeSearchResponse(results=results)
 
 
 @app.post("/generate-route", response_model=GenerateRouteResponse)

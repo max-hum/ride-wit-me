@@ -70,11 +70,21 @@ Without this variable, the frontend cannot call the backend route-generation end
 
 The main page exposes these request controls:
 
+- Start address or place
 - Start latitude
 - Start longitude
 - Distance in kilometers
 - Elevation in meters
 - Ride style
+
+Address lookup and direct coordinates are both visible in the UI at the same time.
+
+The current location flow:
+
+- lets the user resolve an address or place into coordinates
+- still allows manual coordinate entry
+- restores the latest used values from browser local storage
+- leaves the start-location fields blank on a first-time visit
 
 The current implementation hardcodes preference toggles in the request body:
 
@@ -96,6 +106,10 @@ The page sends:
 
 - `POST ${NEXT_PUBLIC_API_BASE_URL}/generate-route`
 
+It can also call:
+
+- `GET ${NEXT_PUBLIC_API_BASE_URL}/geocode/search?text=...`
+
 Expected result:
 
 - A JSON payload containing a `routes` array
@@ -107,6 +121,7 @@ The UI then:
 - Lets the user choose the active route by clicking a card
 - Passes the top 3 route geometries to one shared map
 - Shows an elevation profile for the selected route
+- Uses the coordinate fields as the canonical start point for route generation
 
 ## Map Behavior
 

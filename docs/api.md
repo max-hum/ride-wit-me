@@ -22,6 +22,28 @@ Example response:
 }
 ```
 
+### `GET /geocode/search`
+
+Resolves an address or place string into candidate coordinates for the frontend.
+
+Query parameters:
+
+- `text`: required search string
+
+Example response:
+
+```json
+{
+  "results": [
+    {
+      "label": "Metz, Moselle, Grand Est, France",
+      "lat": 49.1193,
+      "lng": 6.1757
+    }
+  ]
+}
+```
+
 ### `POST /generate-route`
 
 Generates, enriches, ranks, and returns route candidates.

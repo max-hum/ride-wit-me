@@ -21,6 +21,12 @@ class StartPoint(BaseModel):
     lng: float
 
 
+class GeocodeResult(BaseModel):
+    label: str
+    lat: float
+    lng: float
+
+
 class AvoidPreferences(BaseModel):
     busy_roads: bool = True
     urban: bool = True
