@@ -10,6 +10,8 @@ This document captures the current short-to-medium term backlog for Ride Wit Me.
   Notes: this would let friends use the app without consuming a single owner-managed quota.
 - Revisit scoring weights for ride styles other than `endurance`.
   Notes: the current tuning has mainly been optimized around endurance rides, so `hilly`, `scenic`, and `exploration` need dedicated manual calibration first.
+- Much better estimate of ride duration needed.
+  Follow-up: ride duration as an input (maybe for a different ride type!)
 
 ## Product And UX
 
