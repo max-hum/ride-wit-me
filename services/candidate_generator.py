@@ -10,5 +10,9 @@ class CandidateGenerator:
     def __init__(self) -> None:
         self.provider = OpenRouteServiceProvider()
 
-    def generate(self, request: RideRequest) -> List[CandidateRoute]:
-        return self.provider.generate_candidate_routes(request)
+    def generate(
+        self,
+        request: RideRequest,
+        strategy: str = "baseline",
+    ) -> List[CandidateRoute]:
+        return self.provider.generate_candidate_routes(request, strategy=strategy)

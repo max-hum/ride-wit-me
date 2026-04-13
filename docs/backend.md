@@ -87,7 +87,8 @@ Supported values:
 
 The provider:
 
-- Builds several waypoint patterns around the starting point
+- Builds several waypoint-pattern families around the starting point
+- Starts with a baseline generation pass and adds an expanded-variety pass when there are too few strong target matches
 - Requests routes from `https://api.openrouteservice.org/v2/directions/cycling-road/geojson`
 - Requests extra metadata for `surface` and `waytype`
 - Returns normalized `CandidateRoute` objects
@@ -114,9 +115,9 @@ Notable heuristics:
 `services.ranking.rank_routes()`:
 
 - Rejects routes with excessive repeat behavior
-- Falls back to all routes if the filter is too strict
 - Scores remaining routes with `domain.scoring.score_route()`
-- Sorts descending by `overall_fit_score`
+- Keeps stronger distance/elevation matches ahead of weaker-fit fallback routes
+- Sorts descending by `overall_fit_score` within each bucket
 
 ### 4. Export
 
@@ -152,6 +153,6 @@ Currently empty. This appears reserved for named ride templates or request prese
 
 - The backend currently depends on outbound network access to OpenRouteService.
 - There is no caching layer.
-- There is no retry or rate-limit management beyond the provider timeout.
+- There is no provider retry or rate-limit management beyond the provider timeout.
 - There is no persistence layer or database.
 - Errors from provider failures will surface as backend failures if no candidates succeed.

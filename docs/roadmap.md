@@ -4,13 +4,10 @@ This document captures the current short-to-medium term backlog for Ride Wit Me.
 
 ## Near-Term Priorities
 
-- Improve the start-location flow in the UI.
-  Done in v1: address/place lookup and direct coordinate entry now coexist, the frontend can resolve an address into coordinates through the backend geocoding endpoint, the latest used location is restored from local storage, and first-time visits start blank instead of using hardcoded coordinates.
-  Remaining: richer address search and autocomplete, better geocoding result selection and error states, and map click selection as a phase-2 bonus.
+- Enhance the start-location flow in the UI.
+  Notes: the first version is now in place; remaining work is richer address search and autocomplete, better geocoding result selection and error states, and map click selection as a phase-2 bonus.
 - Support user-provided OpenRouteService API keys instead of relying only on one shared project key.
   Notes: this would let friends use the app without consuming a single owner-managed quota.
-- Return a more reliable set of route choices per request.
-  Goal: improve candidate generation so route requests empirically yield a healthier set of viable choices; in the current state, too many requests only return a single usable option.
 - Revisit scoring weights for ride styles other than `endurance`.
   Notes: the current tuning has mainly been optimized around endurance rides, so `hilly`, `scenic`, and `exploration` need dedicated manual calibration first.
 
@@ -47,15 +44,11 @@ This document captures the current short-to-medium term backlog for Ride Wit Me.
 
 - The target shape is something in between a private tool and a public app: built for friends first, but shareable more widely.
 - The "5 routes" goal is an empirical quality target rather than a strict product requirement; the immediate problem is that too many requests currently collapse to a single option.
-- Address search should start with city/street lookup and reuse the latest location by default.
-- Address search should coexist with direct coordinate entry rather than replacing it.
-- The first version can use a simple address resolve action before richer autocomplete work.
 - Map click selection is a useful follow-up, but not the first version of the address-input improvement.
 - Ride-style tuning should start manually, with future evaluation tooling kept as a later enhancement.
 
 ## Routing Quality Ideas
 
-- Add a retry strategy that progressively relaxes constraints when the engine finds only one weak option.
 - Rank for route diversity as well as overall score so the top options are meaningfully different from each other.
 - Add a route-level confidence or match-quality indicator.
 - Introduce route flavors such as `closest match`, `safer`, `more scenic`, `harder`, and `wild card`.

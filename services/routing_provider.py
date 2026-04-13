@@ -27,70 +27,31 @@ class OpenRouteServiceProvider:
                 "Missing OPENROUTESERVICE_API_KEY. Add it to your .env file."
             )
 
-    def generate_candidate_routes(self, request: RideRequest) -> List[CandidateRoute]:
+    def generate_candidate_routes(
+        self,
+        request: RideRequest,
+        strategy: str = "baseline",
+    ) -> List[CandidateRoute]:
         start_lat = request.start_point.lat
         start_lng = request.start_point.lng
 
         base_radius_km = max(8.0, request.distance_km / 4.2)
         routes: List[CandidateRoute] = []
 
-        candidate_coordinate_sets: List[List[List[float]]] = []
-
-        # Family A: classic 2-anchor loops
-        bearings_a = [0, 60, 120, 180, 240, 300]
-        for bearing in bearings_a:
-            r1 = base_radius_km * 1.00
-            r2 = base_radius_km * 0.92
-
-            wp1 = self._offset_point(start_lat, start_lng, r1, bearing)
-            wp2 = self._offset_point(start_lat, start_lng, r2, (bearing + 75) % 360)
-
-            coords = [
-                [start_lng, start_lat],
-                [wp1[1], wp1[0]],
-                [wp2[1], wp2[0]],
-                [start_lng, start_lat],
-            ]
-            candidate_coordinate_sets.append(coords)
-
-        # Family B: rounder 3-anchor loops
-        bearings_b = [30, 90, 150, 210, 270, 330]
-        for bearing in bearings_b:
-            r = base_radius_km * 0.95
-
-            wp1 = self._offset_point(start_lat, start_lng, r, bearing)
-            wp2 = self._offset_point(start_lat, start_lng, r * 1.05, (bearing + 55) % 360)
-            wp3 = self._offset_point(start_lat, start_lng, r * 0.95, (bearing + 110) % 360)
-
-            coords = [
-                [start_lng, start_lat],
-                [wp1[1], wp1[0]],
-                [wp2[1], wp2[0]],
-                [wp3[1], wp3[0]],
-                [start_lng, start_lat],
-            ]
-            candidate_coordinate_sets.append(coords)
-
-        # Family C: tighter loops to reduce overshoot
-        bearings_c = [30, 90, 150, 210, 270, 330]
-        for bearing in bearings_c:
-            r1 = base_radius_km * 0.82
-            r2 = base_radius_km * 0.75
-
-            wp1 = self._offset_point(start_lat, start_lng, r1, bearing)
-            wp2 = self._offset_point(start_lat, start_lng, r2, (bearing + 65) % 360)
-
-            coords = [
-                [start_lng, start_lat],
-                [wp1[1], wp1[0]],
-                [wp2[1], wp2[0]],
-                [start_lng, start_lat],
-            ]
-            candidate_coordinate_sets.append(coords)
+        candidate_coordinate_sets = self._build_candidate_coordinate_sets(
+            start_lat=start_lat,
+            start_lng=start_lng,
+            base_radius_km=base_radius_km,
+            strategy=strategy,
+        )
 
         for idx, coords in enumerate(candidate_coordinate_sets):
             try:
-                route = self._request_route(coords, route_index=idx)
+                route = self._request_route(
+                    coords,
+                    route_index=idx,
+                    strategy=strategy,
+                )
                 routes.append(route)
             except Exception:
                 continue
@@ -139,10 +100,170 @@ class OpenRouteServiceProvider:
 
         return results
 
+    def _build_candidate_coordinate_sets(
+        self,
+        start_lat: float,
+        start_lng: float,
+        base_radius_km: float,
+        strategy: str,
+    ) -> List[List[List[float]]]:
+        candidate_coordinate_sets: List[List[List[float]]] = []
+
+        if strategy == "baseline":
+            # Family A: classic 2-anchor loops
+            bearings_a = [0, 60, 120, 180, 240, 300]
+            for bearing in bearings_a:
+                r1 = base_radius_km * 1.00
+                r2 = base_radius_km * 0.92
+
+                wp1 = self._offset_point(start_lat, start_lng, r1, bearing)
+                wp2 = self._offset_point(start_lat, start_lng, r2, (bearing + 75) % 360)
+
+                coords = [
+                    [start_lng, start_lat],
+                    [wp1[1], wp1[0]],
+                    [wp2[1], wp2[0]],
+                    [start_lng, start_lat],
+                ]
+                candidate_coordinate_sets.append(coords)
+
+            # Family B: rounder 3-anchor loops
+            bearings_b = [30, 90, 150, 210, 270, 330]
+            for bearing in bearings_b:
+                r = base_radius_km * 0.95
+
+                wp1 = self._offset_point(start_lat, start_lng, r, bearing)
+                wp2 = self._offset_point(
+                    start_lat,
+                    start_lng,
+                    r * 1.05,
+                    (bearing + 55) % 360,
+                )
+                wp3 = self._offset_point(
+                    start_lat,
+                    start_lng,
+                    r * 0.95,
+                    (bearing + 110) % 360,
+                )
+
+                coords = [
+                    [start_lng, start_lat],
+                    [wp1[1], wp1[0]],
+                    [wp2[1], wp2[0]],
+                    [wp3[1], wp3[0]],
+                    [start_lng, start_lat],
+                ]
+                candidate_coordinate_sets.append(coords)
+
+            # Family C: tighter loops to reduce overshoot
+            bearings_c = [30, 90, 150, 210, 270, 330]
+            for bearing in bearings_c:
+                r1 = base_radius_km * 0.82
+                r2 = base_radius_km * 0.75
+
+                wp1 = self._offset_point(start_lat, start_lng, r1, bearing)
+                wp2 = self._offset_point(start_lat, start_lng, r2, (bearing + 65) % 360)
+
+                coords = [
+                    [start_lng, start_lat],
+                    [wp1[1], wp1[0]],
+                    [wp2[1], wp2[0]],
+                    [start_lng, start_lat],
+                ]
+                candidate_coordinate_sets.append(coords)
+
+            return candidate_coordinate_sets
+
+        if strategy == "expanded":
+            # Family D: wider 3-anchor loops for more route variety
+            bearings_d = [0, 45, 90, 135, 180, 225, 270, 315]
+            for bearing in bearings_d:
+                r = base_radius_km * 1.08
+
+                wp1 = self._offset_point(start_lat, start_lng, r, bearing)
+                wp2 = self._offset_point(
+                    start_lat,
+                    start_lng,
+                    r * 0.88,
+                    (bearing + 40) % 360,
+                )
+                wp3 = self._offset_point(
+                    start_lat,
+                    start_lng,
+                    r * 1.02,
+                    (bearing + 95) % 360,
+                )
+
+                coords = [
+                    [start_lng, start_lat],
+                    [wp1[1], wp1[0]],
+                    [wp2[1], wp2[0]],
+                    [wp3[1], wp3[0]],
+                    [start_lng, start_lat],
+                ]
+                candidate_coordinate_sets.append(coords)
+
+            # Family E: compact 4-anchor loops that can land closer to targets
+            bearings_e = [20, 80, 140, 200, 260, 320]
+            for bearing in bearings_e:
+                r = base_radius_km * 0.78
+
+                wp1 = self._offset_point(start_lat, start_lng, r, bearing)
+                wp2 = self._offset_point(
+                    start_lat,
+                    start_lng,
+                    r * 0.92,
+                    (bearing + 35) % 360,
+                )
+                wp3 = self._offset_point(
+                    start_lat,
+                    start_lng,
+                    r * 0.98,
+                    (bearing + 75) % 360,
+                )
+                wp4 = self._offset_point(
+                    start_lat,
+                    start_lng,
+                    r * 0.85,
+                    (bearing + 120) % 360,
+                )
+
+                coords = [
+                    [start_lng, start_lat],
+                    [wp1[1], wp1[0]],
+                    [wp2[1], wp2[0]],
+                    [wp3[1], wp3[0]],
+                    [wp4[1], wp4[0]],
+                    [start_lng, start_lat],
+                ]
+                candidate_coordinate_sets.append(coords)
+
+            # Family F: longer asymmetric loops to widen the pool when strict fits are scarce
+            bearings_f = [15, 75, 135, 195, 255, 315]
+            for bearing in bearings_f:
+                r1 = base_radius_km * 1.15
+                r2 = base_radius_km * 0.68
+
+                wp1 = self._offset_point(start_lat, start_lng, r1, bearing)
+                wp2 = self._offset_point(start_lat, start_lng, r2, (bearing + 85) % 360)
+
+                coords = [
+                    [start_lng, start_lat],
+                    [wp1[1], wp1[0]],
+                    [wp2[1], wp2[0]],
+                    [start_lng, start_lat],
+                ]
+                candidate_coordinate_sets.append(coords)
+
+            return candidate_coordinate_sets
+
+        raise RoutingProviderError(f"Unknown generation strategy: {strategy}")
+
     def _request_route(
         self,
         coordinates: List[List[float]],
         route_index: int,
+        strategy: str,
     ) -> CandidateRoute:
         headers = {
             "Authorization": self.api_key,
@@ -183,7 +304,9 @@ class OpenRouteServiceProvider:
         timestamp = datetime.now().strftime("%H%M%S")
 
         return CandidateRoute(
-            route_id=f"ors-{timestamp}-{route_index:02d}-{uuid.uuid4().hex[:6]}",
+            route_id=(
+                f"ors-{strategy[:3]}-{timestamp}-{route_index:02d}-{uuid.uuid4().hex[:6]}"
+            ),
             provider="openrouteservice",
             geometry=latlng_geometry,
             distance_km=round(summary["distance"] / 1000.0, 2),
