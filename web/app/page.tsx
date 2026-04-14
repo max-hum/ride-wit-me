@@ -1,3 +1,10 @@
+export default function Page() {
+  return <div>It works 🚀</div>;
+}
+
+
+/*
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -524,3 +531,5 @@ function Metric({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+*/
