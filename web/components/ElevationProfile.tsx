@@ -90,9 +90,11 @@ export default function ElevationProfile({ geometry }: Props) {
               tickFormatter={(value) => `${value} m`}
             />
             <Tooltip
-              formatter={(value: number, name: string) => {
-                if (name === "elevationM") return [`${value} m`, "Elevation"];
-                return [value, name];
+              formatter={(value, name) => {
+                if (name === "elevationM") {
+                  return [`${value ?? ""} m`, "Elevation"];
+                }
+                return [String(value ?? ""), String(name)];
               }}
               labelFormatter={(label) => `${label} km`}
             />
