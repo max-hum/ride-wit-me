@@ -27,6 +27,12 @@ def dump_debug_run(
                 "distance_km": route.enriched.candidate.distance_km,
                 "elevation_m": route.enriched.candidate.elevation_m,
                 "estimated_duration_min": route.enriched.candidate.estimated_duration_min,
+                "provider_duration_min": route.enriched.candidate.metadata.get(
+                    "provider_duration_min"
+                ),
+                "duration_estimate": route.enriched.candidate.metadata.get(
+                    "duration_estimate"
+                ),
                 "fit": route.fit.model_dump(),
                 "reason_summary": route.reason_summary,
                 "enriched": {

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 
 from domain.models import CandidateRoute, RideRequest
 from services.routing_provider import OpenRouteServiceProvider
 
 
 class CandidateGenerator:
-    def __init__(self, api_key: str | None = None) -> None:
+    def __init__(self, api_key: Optional[str] = None) -> None:
         self.provider = OpenRouteServiceProvider(api_key=api_key)
 
     def generate(

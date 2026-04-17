@@ -31,6 +31,8 @@ python -m app.main \
   --start-lng 6.1685 \
   --distance 65 \
   --elevation 700 \
+  --ftp 250 \
+  --system-weight 83 \
   --ride-style endurance
 ```
 
@@ -106,6 +108,7 @@ Notable heuristics:
 
 - Surface estimates use ORS `surface` extra info
 - Road-type quality uses ORS `waytype` distribution conservatively
+- Ride duration is recalculated with `services.duration_estimator` from FTP, total system weight, route profile, and light surface/urban penalties
 - Repeated-segment detection ignores the first and last 10% of segments so short home-exit overlap is tolerated
 - Urbanity is estimated from route length and road composition
 - Novelty is approximated from point uniqueness and repeated-segment ratio

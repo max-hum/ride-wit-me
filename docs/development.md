@@ -65,6 +65,8 @@ curl -X POST http://127.0.0.1:8000/generate-route \
     "start_point": { "lat": 49.3597, "lng": 6.1685 },
     "distance_km": 65,
     "elevation_m": 700,
+    "ftp_watts": 250,
+    "system_weight_kg": 83,
     "ride_style": "endurance"
   }'
 ```
@@ -77,6 +79,8 @@ python -m app.main \
   --start-lng 6.1685 \
   --distance 65 \
   --elevation 700 \
+  --ftp 250 \
+  --system-weight 83 \
   --ride-style endurance
 ```
 
@@ -89,7 +93,11 @@ cd web
 npm run lint
 ```
 
-There is currently no dedicated Python lint or test command defined in the repository.
+Backend test command:
+
+```bash
+./.venv/bin/python -m unittest discover -s tests
+```
 
 ## Working On The Backend
 
@@ -127,7 +135,7 @@ These directories are generated at runtime and do not need to be committed.
 
 ## Known Technical Debt
 
-- No automated tests
+- Automated tests are still limited in scope
 - No typed shared API contract between frontend and backend
 - No provider abstraction beyond the current OpenRouteService implementation
 - Empty placeholder files in `data/` for future rider profiles and presets

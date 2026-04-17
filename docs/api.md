@@ -66,6 +66,8 @@ Optional headers:
   },
   "distance_km": 65,
   "elevation_m": 700,
+  "ftp_watts": 250,
+  "system_weight_kg": 83,
   "ride_style": "endurance",
   "avoid": {
     "busy_roads": true,
@@ -97,6 +99,17 @@ Optional headers:
 
 - number
 - must be greater than or equal to `0`
+
+### `ftp_watts`
+
+- number
+- must be greater than `0`
+
+### `system_weight_kg`
+
+- number
+- total rider plus bike weight
+- must be greater than `0`
 
 ### `ride_style`
 
@@ -193,6 +206,10 @@ This is a transformed representation of the provider route geometry.
 ### `reason_summary`
 
 This is a short human-readable explanation built from the score breakdown. It is intended for UI display, not for strict programmatic logic.
+
+### `estimated_duration_min`
+
+This is a rider-specific duration estimate, not the raw provider time. The backend uses the rider's FTP and total system weight, then applies a lightweight road-cycling physics model plus small surface and urban-context penalties.
 
 ## Error Behavior
 

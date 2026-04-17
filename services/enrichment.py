@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections import Counter
 from typing import Dict, List, Tuple
 
-
-from domain.models import CandidateRoute, EnrichedRoute
+from domain.models import CandidateRoute, EnrichedRoute, RideRequest
+from services.duration_estimator import estimate_ride_duration
 
 
 # OpenRouteService extra_info mappings:
@@ -55,7 +55,7 @@ MAJOR_WAYTYPE_VALUES = {
 # Because ORS enum values can vary by profile/version, v0 keeps these heuristics loose.
 
 
-def enrich_route(candidate: CandidateRoute) -> EnrichedRoute:
+def enrich_route(candidate: CandidateRoute, request: RideRequest) -> EnrichedRoute:
     metadata = candidate.metadata or {}
     extras = metadata.get("extras", {})
 
@@ -64,20 +64,50 @@ def enrich_route(candidate: CandidateRoute) -> EnrichedRoute:
 
     paved_ratio, unpaved_ratio = _estimate_surface_ratios(surface_distribution)
     minor_road_ratio, busy_road_ratio = _estimate_waytype_ratios(waytype_distribution)
-    repeated_segment_ratio, longest_repeated_block_km = _estimate_repeat_metrics(candidate.geometry)
+    repeated_segment_ratio, longest_repeated_block_km = _estimate_repeat_metrics(
+        candidate.geometry
+    )
     urban_ratio = _estimate_urban_ratio(candidate, minor_road_ratio)
-    scenic_score = _estimate_scenic_score(urban_ratio, minor_road_ratio, repeated_segment_ratio)
+    scenic_score = _estimate_scenic_score(
+        urban_ratio,
+        minor_road_ratio,
+        repeated_segment_ratio,
+    )
     climbing_score = _estimate_climbing_score(candidate)
-    ride_feel_score = _estimate_ride_feel_score(candidate, repeated_segment_ratio, busy_road_ratio)
+    ride_feel_score = _estimate_ride_feel_score(
+        candidate,
+        repeated_segment_ratio,
+        busy_road_ratio,
+    )
     novelty_score = _estimate_novelty_score(repeated_segment_ratio, candidate.geometry)
+    estimated_duration_min, duration_estimate = estimate_ride_duration(
+        candidate,
+        request,
+        paved_ratio=paved_ratio,
+        unpaved_ratio=unpaved_ratio,
+        busy_road_ratio=busy_road_ratio,
+        urban_ratio=urban_ratio,
+        repeated_segment_ratio=repeated_segment_ratio,
+    )
+
+    enriched_candidate = candidate.model_copy(
+        update={
+            "estimated_duration_min": estimated_duration_min,
+            "metadata": {
+                **metadata,
+                "duration_estimate": duration_estimate,
+            },
+        }
+    )
 
     notes = {
         "surface_distribution": surface_distribution,
         "waytype_distribution": waytype_distribution,
+        "duration_estimate": duration_estimate,
     }
 
     return EnrichedRoute(
-        candidate=candidate,
+        candidate=enriched_candidate,
         paved_ratio=round(paved_ratio, 3),
         minor_road_ratio=round(minor_road_ratio, 3),
         scenic_score=round(scenic_score, 3),
@@ -183,6 +213,7 @@ def _estimate_waytype_ratios(waytype_distribution: Dict[int, float]) -> Tuple[fl
     busy = 1.0 - minor
 
     return minor, busy
+
 
 def _haversine_m(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     from math import radians, sin, cos, sqrt, atan2

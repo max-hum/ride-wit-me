@@ -4,7 +4,7 @@ from datetime import datetime
 
 import math
 import uuid
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import requests
 
@@ -20,7 +20,7 @@ class OpenRouteServiceProvider:
     BASE_URL = "https://api.openrouteservice.org/v2/directions/cycling-road"
     GEOCODE_URL = "https://api.openrouteservice.org/geocode/search"
 
-    def __init__(self, api_key: str | None = None) -> None:
+    def __init__(self, api_key: Optional[str] = None) -> None:
         self.api_key = api_key or OPENROUTESERVICE_API_KEY
         if not self.api_key:
             raise RoutingProviderError(
@@ -294,12 +294,18 @@ class OpenRouteServiceProvider:
         geometry = feature["geometry"]["coordinates"]
         props = feature["properties"]
         summary = props["summary"]
+        provider_duration_min = round(summary["duration"] / 60.0, 1)
 
         latlng_geometry = [
             (pt[1], pt[0], float(pt[2]) if len(pt) >= 3 else 0.0)
             for pt in geometry
-        ]        
+        ]
         elevation_gain = props.get("ascent", 0.0)
+        metadata = {
+            **props,
+            "provider_duration_min": provider_duration_min,
+            "provider_duration_source": "openrouteservice",
+        }
 
         timestamp = datetime.now().strftime("%H%M%S")
 
@@ -311,8 +317,8 @@ class OpenRouteServiceProvider:
             geometry=latlng_geometry,
             distance_km=round(summary["distance"] / 1000.0, 2),
             elevation_m=round(elevation_gain, 0),
-            estimated_duration_min=round(summary["duration"] / 60.0, 1),
-            metadata=props,
+            estimated_duration_min=provider_duration_min,
+            metadata=metadata,
         )
 
     @staticmethod

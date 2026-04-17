@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
@@ -23,7 +25,7 @@ app.add_middleware(
 )
 
 
-def resolve_ors_api_key(x_ors_api_key: str | None) -> str | None:
+def resolve_ors_api_key(x_ors_api_key: Optional[str]) -> Optional[str]:
     if x_ors_api_key is None:
         return None
 
@@ -79,7 +81,7 @@ def health() -> dict:
 @app.get("/geocode/search", response_model=GeocodeSearchResponse)
 def geocode_search(
     text: str,
-    x_ors_api_key: str | None = Header(default=None, alias="X-ORS-API-Key"),
+    x_ors_api_key: Optional[str] = Header(default=None, alias="X-ORS-API-Key"),
 ) -> GeocodeSearchResponse:
     query = text.strip()
     if not query:
@@ -99,7 +101,7 @@ def geocode_search(
 @app.post("/generate-route", response_model=GenerateRouteResponse)
 def generate_route(
     request: RideRequest,
-    x_ors_api_key: str | None = Header(default=None, alias="X-ORS-API-Key"),
+    x_ors_api_key: Optional[str] = Header(default=None, alias="X-ORS-API-Key"),
 ) -> GenerateRouteResponse:
     ranked_routes = generate_routes(
         request,

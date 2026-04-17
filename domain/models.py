@@ -44,6 +44,8 @@ class RideRequest(BaseModel):
     start_point: StartPoint
     distance_km: float = Field(..., gt=0)
     elevation_m: float = Field(..., ge=0)
+    ftp_watts: float = Field(..., gt=0)
+    system_weight_kg: float = Field(..., gt=0)
     ride_style: RideStyle = RideStyle.ENDURANCE
     avoid: AvoidPreferences = Field(default_factory=AvoidPreferences)
     prefer: PreferPreferences = Field(default_factory=PreferPreferences)

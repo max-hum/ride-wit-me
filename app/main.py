@@ -17,6 +17,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--start-lng", type=float, required=True)
     parser.add_argument("--distance", type=float, required=True, help="Target distance in km")
     parser.add_argument("--elevation", type=float, required=True, help="Target elevation in m")
+    parser.add_argument("--ftp", type=float, required=True, help="FTP in watts")
+    parser.add_argument(
+        "--system-weight",
+        type=float,
+        required=True,
+        help="Total rider plus bike weight in kg",
+    )
     parser.add_argument("--ride-style", type=str, default="endurance")
     parser.add_argument("--debug", action="store_true")
     return parser.parse_args()
@@ -32,6 +39,8 @@ def main() -> None:
         ),
         distance_km=args.distance,
         elevation_m=args.elevation,
+        ftp_watts=args.ftp,
+        system_weight_kg=args.system_weight,
         ride_style=args.ride_style,
     )
 

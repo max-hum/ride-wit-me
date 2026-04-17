@@ -66,6 +66,8 @@ type StoredRideFormState = {
   startLng: string;
   distanceKm: string;
   elevationM: string;
+  ftpWatts: string;
+  systemWeightKg: string;
   rideStyle: string;
 };
 
@@ -100,6 +102,8 @@ function readStoredRideFormState(): StoredRideFormState | null {
       startLng: parsed.startLng ?? "",
       distanceKm: parsed.distanceKm ?? "65",
       elevationM: parsed.elevationM ?? "700",
+      ftpWatts: parsed.ftpWatts ?? "",
+      systemWeightKg: parsed.systemWeightKg ?? "",
       rideStyle: parsed.rideStyle ?? "endurance",
     };
   } catch {
@@ -153,6 +157,8 @@ export default function Home() {
   const [startLng, setStartLng] = useState("");
   const [distanceKm, setDistanceKm] = useState("65");
   const [elevationM, setElevationM] = useState("700");
+  const [ftpWatts, setFtpWatts] = useState("");
+  const [systemWeightKg, setSystemWeightKg] = useState("");
   const [rideStyle, setRideStyle] = useState("endurance");
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
@@ -176,6 +182,8 @@ export default function Home() {
     setStartLng(savedState.startLng);
     setDistanceKm(savedState.distanceKm);
     setElevationM(savedState.elevationM);
+    setFtpWatts(savedState.ftpWatts);
+    setSystemWeightKg(savedState.systemWeightKg);
     setRideStyle(savedState.rideStyle);
   }, []);
 
@@ -232,6 +240,8 @@ export default function Home() {
         startLng: resolvedLng,
         distanceKm,
         elevationM,
+        ftpWatts,
+        systemWeightKg,
         rideStyle,
       });
     } catch (err) {
@@ -252,6 +262,11 @@ export default function Home() {
       const parsedLng = parseRequiredNumber(startLng, "Start longitude");
       const parsedDistanceKm = parseRequiredNumber(distanceKm, "Distance");
       const parsedElevationM = parseRequiredNumber(elevationM, "Elevation");
+      const parsedFtpWatts = parseRequiredNumber(ftpWatts, "FTP");
+      const parsedSystemWeightKg = parseRequiredNumber(
+        systemWeightKg,
+        "System weight"
+      );
 
       writeStoredRideFormState({
         orsApiKey,
@@ -260,6 +275,8 @@ export default function Home() {
         startLng: String(parsedLng),
         distanceKm,
         elevationM,
+        ftpWatts,
+        systemWeightKg,
         rideStyle,
       });
 
@@ -282,6 +299,8 @@ export default function Home() {
             },
             distance_km: parsedDistanceKm,
             elevation_m: parsedElevationM,
+            ftp_watts: parsedFtpWatts,
+            system_weight_kg: parsedSystemWeightKg,
             ride_style: rideStyle,
             avoid: {
               busy_roads: true,
@@ -325,18 +344,55 @@ export default function Home() {
           className="mt-8 rounded-2xl bg-white p-6 shadow-sm border border-slate-200"
         >
           <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <label className="mb-1 block text-sm font-medium">OpenRouteService API key</label>
-            <input
-              className="w-full rounded-xl border border-slate-300 px-3 py-2"
-              type="password"
-              placeholder="Optional: leave blank to use the server default key"
-              value={orsApiKey}
-              onChange={(e) => setOrsApiKey(e.target.value)}
-            />
-            <p className="mt-2 text-sm text-slate-600">
-              The latest used key is restored locally in this browser. If left blank, the
-              backend falls back to its configured server key.
-            </p>
+            <div className="mb-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Config
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Saved locally in this browser and reused across route requests.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="md:col-span-3">
+                <label className="mb-1 block text-sm font-medium">
+                  OpenRouteService API key
+                </label>
+                <input
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2"
+                  type="password"
+                  placeholder="Optional: leave blank to use the server default key"
+                  value={orsApiKey}
+                  onChange={(e) => setOrsApiKey(e.target.value)}
+                />
+                <p className="mt-2 text-sm text-slate-600">
+                  If left blank, the backend falls back to its configured server key.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium">FTP (W)</label>
+                <input
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2"
+                  value={ftpWatts}
+                  onChange={(e) => setFtpWatts(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium">System weight (kg)</label>
+                <input
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2"
+                  value={systemWeightKg}
+                  onChange={(e) => setSystemWeightKg(e.target.value)}
+                />
+              </div>
+
+              <div className="text-sm text-slate-600 md:self-end">
+                Duration estimates assume a road bike and use your FTP plus total rider
+                and bike weight to model a sustainable pace.
+              </div>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">

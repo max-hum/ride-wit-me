@@ -5,6 +5,7 @@ Ride Wit Me is a route-generation project for road cycling. It combines a Python
 ## What It Does
 
 - Accepts a ride request with a start point, target distance, target elevation, and ride style.
+- Accepts rider inputs for FTP and total system weight so route duration can be estimated for the specific cyclist.
 - Generates multiple loop-shaped route candidates through OpenRouteService.
 - Enriches each candidate with heuristic quality signals such as scenic value, ride feel, climbing character, road quality, and repeated-segment penalties.
 - Filters out poor loop shapes, ranks the remaining routes, and returns them through a FastAPI API.
@@ -116,6 +117,8 @@ python -m app.main \
   --start-lng 6.1685 \
   --distance 65 \
   --elevation 700 \
+  --ftp 250 \
+  --system-weight 83 \
   --ride-style endurance \
   --debug
 ```
@@ -149,6 +152,8 @@ Example request:
   "start_point": { "lat": 49.3597, "lng": 6.1685 },
   "distance_km": 65,
   "elevation_m": 700,
+  "ftp_watts": 250,
+  "system_weight_kg": 83,
   "ride_style": "endurance",
   "avoid": {
     "busy_roads": true,
@@ -181,7 +186,7 @@ Full contract: [docs/api.md](/Users/maximehumbert/Documents/GitHub/ride-wit-me/d
 - Ranking is heuristic and does not use historical rider preferences or learned personalization.
 - `data/rider_profile.json` and `data/presets.json` are currently empty placeholders.
 - The frontend exposes only a subset of the backend request controls.
-- There is no automated test suite in the repository yet.
+- Automated Python coverage is still narrow and currently focused on duration-estimation behavior.
 
 ## License / Ownership
 
